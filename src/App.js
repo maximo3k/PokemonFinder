@@ -1,24 +1,49 @@
-import logo from './logo.svg';
 import './App.css';
+import { useState } from 'react';
+import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
+
+//Components
+import Input from './Components/Input';
+
+// Apollo client setup
+const client = new ApolloClient({
+  uri:'https://graphql-pokemon2.vercel.app/',
+  cache: new InMemoryCache()
+});
+
+
 
 function App() {
+
+  const [pokemonInput, setPokemonInput] = useState();
+
+  // Query
+  const getPokemonQuery = gql`
+  {
+    query{
+      pokemon(name: "{pokemonInput}}"){
+        name
+        image
+      }
+    }
+  }
+  `;
+
+  
+  const takePokemonName = (pokemon) => {
+    setPokemonInput(pokemon);
+    console.log(pokemon);
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ApolloProvider client={client}>
+      <div className ="App">
+        <Input 
+          takePokemonName = {takePokemonName}
+        />
+        <p>{useQuery(getPokemonQuery)}</p>
+      </div>
+    </ApolloProvider>
   );
 }
 
