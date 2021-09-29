@@ -1,9 +1,10 @@
 import './App.css';
 import { useState } from 'react';
-import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql, useLazyQuery } from '@apollo/client';
 
 //Components
 import Input from './Components/Input';
+import Output from './Components/Output';
 
 // Apollo client setup
 const client = new ApolloClient({
@@ -13,27 +14,43 @@ const client = new ApolloClient({
 
 
 
+
+
 function App() {
 
-  const [pokemonInput, setPokemonInput] = useState();
+  const [pokemonInput, setPokemonInput] = useState("test");
+
 
   // Query
-  const getPokemonQuery = gql`
-  {
-    query{
-      pokemon(name: "{pokemonInput}}"){
+  const GET_POKEMON_QUERY = gql`
+    query GetPokemon($pokemon: String!){
+      pokemon(name: $pokemon){
         name
+        number
+        classification
+        types
         image
+        maxHP
+        attacks {
+          special {
+            name
+            type
+            damage
+          }
+        }
       }
     }
-  }
   `;
+  const [getPokemon, {loading, error, data}] = useLazyQuery(GET_POKEMON_QUERY)
 
-  
   const takePokemonName = (pokemon) => {
     setPokemonInput(pokemon);
-    console.log(pokemon);
+    getPokemon({variables: {pokemon: pokemon}});
+
   }
+
+
+  if (error) return `Error! ${error}`;
 
   return (
     <ApolloProvider client={client}>
@@ -41,7 +58,19 @@ function App() {
         <Input 
           takePokemonName = {takePokemonName}
         />
-        <p>{useQuery(getPokemonQuery)}</p>
+        {data?.pokemon.name &&
+        <Output 
+          name = {data.pokemon.name}
+          number = {data.pokemon.number}
+          hp = {data.pokemon.maxHP}
+          attacks = {data.pokemon.attacks.special}
+          type = {data.pokemon.types}
+          image = {data.pokemon.image}
+        />
+        }
+        
+        {loading == true && <p style={{textAlign: "center"}}>Loading ...</p>}
+
       </div>
     </ApolloProvider>
   );
